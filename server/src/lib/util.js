@@ -1,7 +1,5 @@
 import jwt from "jsonwebtoken";
 
-// Middleware to authenticate JWT tokens
-
 export const generateToken = (userId, res) =>{
     const token  = jwt.sign({ userId}, process.env.JWT_SECRET,{
         expiresIn: '1d'
@@ -9,7 +7,7 @@ export const generateToken = (userId, res) =>{
     res.cookie('jwt', token, {
         maxAge: 1 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "lax", // Changed from "strict" to "lax"
         secure: process.env.NODE_ENV !== "development",
     });
     return token;
