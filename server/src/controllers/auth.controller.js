@@ -1,13 +1,16 @@
 import { generateToken } from "../lib/util.js";
 import User from "../models/user.model.js"
+import bcrypt from "bcryptjs"
 
 
 export const signUp = async (req, res) => {
 
     try {
-        const { name, email, password } = req.body;
-        if (!name, !email, !password)
+        const { name, email, password, confirmPassword } = req.body;
+        if (!name, !email, !password, !confirmPassword)
             return res.status(400).json({ error: "All fields are required" });
+        if (password !== confirmPassword)
+            return res.status(400).json({ error: "Passwords do not match" });
         const user = await User.findOne({ email });
 
         if (user) return res.status(400).json({ error: "Email already exists" });
@@ -17,7 +20,7 @@ export const signUp = async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: "User registered successfully", user: newUser });
     } catch (error) {
-        res.status(500).json({ error: "Error registering user" });
+        res.status(500).json({ error: "Error registering user", error: error.message });
     }
 }
 
