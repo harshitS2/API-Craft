@@ -8,12 +8,12 @@ export const signUp = async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
         if (!name, !email, !password, !confirmPassword)
-            return res.status(400).json({ error: "All fields are required" });
+            return res.status(400).json({ message: "All fields are required" });
         if (password !== confirmPassword)
-            return res.status(400).json({ error: "Passwords do not match" });
+            return res.status(400).json({ message: "Passwords do not match" });
         const user = await User.findOne({ email });
 
-        if (user) return res.status(400).json({ error: "Email already exists" });
+        if (user) return res.status(400).json({ message: "Email already exists" });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ name, email, password: hashedPassword });
@@ -34,7 +34,7 @@ export const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
         generateToken(user._id, res);
-        res.json({ message: "User logged in successfully", user: user });
+        res.status(200).json({ message: "User logged in successfully", user: user });
     }
     catch (error) {
         res.status(500).json({ error: "Error logging in user" });
@@ -62,3 +62,7 @@ export const updateProfile = async (req, res) => {
         res.status(401).json("Internal error: " + error.message);
     }
 }
+
+export const checkAuth = async (req, res) => {
+    res.status(200).json({ message: "Authenticated", user: req.user });
+};
