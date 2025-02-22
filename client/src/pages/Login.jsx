@@ -47,7 +47,6 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please check your credentials.");
       if (error.response?.data?.error) {
         setServerError(error.response.data.error);
       } else {
