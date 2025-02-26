@@ -1,0 +1,257 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/api-craft', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('MongoDB Connected'))
+.catch(err => console.error('MongoDB Connection Error:', err));
+
+// Store for created models and routes
+const createdModels = {};
+const createdRoutes = {};
+
+// Endpoint to create schema and routes
+app.post('/api/create-schema', async (req, res) => {
+  try {
+    const { schemaName, fields, routeName } = req.body;
+    
+    if (!schemaName || !fields || !Array.isArray(fields) || fields.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid schema definition' });
+    }
+    
+    // Create Mongoose Schema
+    const schemaDefinition = {};
+    fields.forEach(field => {
+      let fieldType;
+      
+      // Convert string type names to actual Mongoose/JavaScript types
+      switch(field.type.toLowerCase()) {
+        case 'string':
+          fieldType = String;
+          break;
+        case 'number':
+          fieldType = Number;
+          break;
+        case 'boolean':
+          fieldType = Boolean;
+          break;
+        case 'date':
+          fieldType = Date;
+          break;
+        case 'objectid':
+          fieldType = mongoose.Schema.Types.ObjectId;
+          break;
+        case 'array':
+          fieldType = Array;
+          break;
+        case 'object':
+          fieldType = Object;
+          break;
+        default:
+          fieldType = String;
+      }
+      
+      schemaDefinition[field.name] = {
+        type: fieldType,
+        required: field.required === true
+      };
+    });
+    
+    // Create and register model if it doesn't exist or update if it does
+    const modelSchema = new mongoose.Schema(schemaDefinition, { timestamps: true });
+    
+    // If model already exists, we need to overwrite it
+    if (createdModels[schemaName]) {
+      // Delete the existing model from mongoose
+      mongoose.deleteModel(schemaName);
+    }
+    
+    const Model = mongoose.model(schemaName, modelSchema);
+    createdModels[schemaName] = Model;
+    
+    // Create routes for this model
+    const actualRouteName = routeName || schemaName.toLowerCase();
+    const router = express.Router();
+    
+    // GET all
+    router.get('/', async (req, res) => {
+      try {
+        const items = await Model.find();
+        res.json({ success: true, data: items });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+    
+    // GET by ID
+    router.get('/:id', async (req, res) => {
+      try {
+        const item = await Model.findById(req.params.id);
+        if (!item) {
+          return res.status(404).json({ success: false, message: 'Item not found' });
+        }
+        res.json({ success: true, data: item });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+    
+    // POST new item
+    router.post('/', async (req, res) => {
+      try {
+        const newItem = new Model(req.body);
+        const savedItem = await newItem.save();
+        res.status(201).json({ success: true, data: savedItem });
+      } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+      }
+    });
+    
+    // PUT update item
+    router.put('/:id', async (req, res) => {
+      try {
+        const updatedItem = await Model.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true, runValidators: true }
+        );
+        if (!updatedItem) {
+          return res.status(404).json({ success: false, message: 'Item not found' });
+        }
+        res.json({ success: true, data: updatedItem });
+      } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+      }
+    });
+    
+    // DELETE item
+    router.delete('/:id', async (req, res) => {
+      try {
+        const deletedItem = await Model.findByIdAndDelete(req.params.id);
+        if (!deletedItem) {
+          return res.status(404).json({ success: false, message: 'Item not found' });
+        }
+        res.json({ success: true, data: deletedItem });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+    
+    // Register the route
+    if (createdRoutes[actualRouteName]) {
+      // Remove existing route handler
+      app._router.stack = app._router.stack.filter(layer => {
+        if (layer.route && layer.route.path === `/api/${actualRouteName}`) {
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    app.use(`/api/${actualRouteName}`, router);
+    createdRoutes[actualRouteName] = router;
+    
+    // Return schema and route information
+    res.status(201).json({
+      success: true,
+      schema: {
+        name: schemaName,
+        fields: schemaDefinition
+      },
+      routes: {
+        name: actualRouteName,
+        endpoints: [
+          { method: 'GET', path: `/api/${actualRouteName}`, description: 'Get all items' },
+          { method: 'GET', path: `/api/${actualRouteName}/:id`, description: 'Get item by ID' },
+          { method: 'POST', path: `/api/${actualRouteName}`, description: 'Create new item' },
+          { method: 'PUT', path: `/api/${actualRouteName}/:id`, description: 'Update item by ID' },
+          { method: 'DELETE', path: `/api/${actualRouteName}/:id`, description: 'Delete item by ID' }
+        ]
+      }
+    });
+    
+  } catch (error) {
+    console.error('Schema creation error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Endpoint to get all created schemas and routes
+app.get('/api/schemas', (req, res) => {
+  const schemas = Object.keys(createdModels).map(modelName => {
+    const model = createdModels[modelName];
+    const schemaFields = model.schema.obj;
+    
+    return {
+      name: modelName,
+      fields: Object.entries(schemaFields).map(([fieldName, fieldDef]) => ({
+        name: fieldName,
+        type: fieldDef.type.name || 'String',
+        required: fieldDef.required || false
+      }))
+    };
+  });
+  
+  const routes = Object.keys(createdRoutes).map(routeName => ({
+    name: routeName,
+    path: `/api/${routeName}`
+  }));
+  
+  res.json({
+    success: true,
+    schemas,
+    routes
+  });
+});
+
+// Endpoint to modify schema
+app.put('/api/modify-schema/:schemaName', async (req, res) => {
+  try {
+    const { schemaName } = req.params;
+    const { fields, routeName } = req.body;
+    
+    if (!createdModels[schemaName]) {
+      return res.status(404).json({ success: false, message: 'Schema not found' });
+    }
+    
+    // Forward to create endpoint to handle the update
+    req.body.schemaName = schemaName;
+    
+    // Call the create endpoint handler
+    const createReq = { body: req.body };
+    const createRes = {
+      status: (code) => ({
+        json: (data) => {
+          res.status(code).json(data);
+        }
+      })
+    };
+    
+    await app._router.stack
+      .find(layer => layer.route && layer.route.path === '/api/create-schema')
+      .handle(createReq, createRes);
+    
+  } catch (error) {
+    console.error('Schema modification error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+module.exports = app;
