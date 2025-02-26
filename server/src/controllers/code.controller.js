@@ -23,8 +23,8 @@ export const generateControllerCode = (schemaName, fields) => {
     const modelName = schemaName.charAt(0).toUpperCase() + schemaName.slice(1);
     const controllerCode = [
         {
-            name: `getAll${modelName}`,
-            code: `export const getAll${modelName} = async (req, res) => {
+            name: `get${modelName}`,
+            code: `export const get${modelName} = async (req, res) => {
                 try {
                     const ${schemaName.toLowerCase()} = await ${modelName}.find();
                     res.status(200).json(${schemaName.toLowerCase()});
@@ -75,8 +75,42 @@ export const generateControllerCode = (schemaName, fields) => {
                     res.status(500).json({ message: error.message });
                 }
             };`
-        }
+        },
+        {
+            name: `delete${modelName}`,
+            code: `export const delete${modelName} = async (req, res) => {
+                const { id } = req.params;
+                try {
+                    const deleted${modelName} = await ${modelName}.findByIdAndDelete(id);
+                    if (!deleted${modelName}) {
+                        return res.status(404).json({ message: '${modelName} not found' });
+                    }
+                    res.status(200).json({ message: '${modelName} deleted successfully' });
+                } catch (error) {
+                    res.status(500).json({ message: error.message });
+                }
+            };`
+        },
     ];
 
     return controllerCode;
+};
+
+export const generateRoutesCode = (schemaName) => {
+    const modelName = schemaName.charAt(0).toUpperCase() + schemaName.slice(1);
+    const routes = `
+import express from "express";
+import { get${modelName}, get${modelName}ById, create${modelName}, update${modelName}ByID, delete${modelName} } from '../controllers/${schemaName}.controller.js';
+
+const router = express.Router();
+
+router.get('/${schemaName.toLowerCase()}', get${modelName});
+router.get('/${schemaName.toLowerCase()}/:id', get${modelName}ById);
+router.post('/${schemaName.toLowerCase()}', create${modelName});
+router.put('/${schemaName.toLowerCase()}/:id', update${modelName}ByID);
+router.delete('/${schemaName.toLowerCase()}/:id', delete${modelName});
+
+export default router;
+    `;
+    return routes;
 };
