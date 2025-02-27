@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { PlusCircle, Trash2, Plus } from "lucide-react";
+import { useApiStore } from "../store/useApiStore";
 
 export default function CreateApi() {
-  const [selectedFields, setSelectedFields] = useState([]);
+  const [fields, setfields] = useState([]);
   const [httpMethod, setHttpMethod] = useState("GET");
   const [schemaName, setSchemaName] = useState("Resource");
   const [customField, setCustomField] = useState("");
-
+  const {createApi} = useApiStore();
   const preWrittenFields = [
     "name",
     "email",
@@ -19,29 +20,29 @@ export default function CreateApi() {
   ];
 
   const addField = (fieldName) => {
-    if (!selectedFields.some((f) => f.name === fieldName)) {
-      setSelectedFields([
-        ...selectedFields,
+    if (!fields.some((f) => f.name === fieldName)) {
+      setfields([
+        ...fields,
         { name: fieldName, type: "String", required: false, unique: false },
       ]);
     }
   };
 
   const removeField = (fieldName) => {
-    setSelectedFields(selectedFields.filter((f) => f.name !== fieldName));
+    setfields(fields.filter((f) => f.name !== fieldName));
   };
 
   // Update a specific field property
   const updateField = (fieldName, key, value) => {
-    setSelectedFields(
-      selectedFields.map((field) =>
+    setfields(
+      fields.map((field) =>
         field.name === fieldName ? { ...field, [key]: value } : field
       )
     );
   };
 
   const handleAddCustomField = () => {
-    if (customField.trim() && !selectedFields.some((f) => f.name === customField)) {
+    if (customField.trim() && !fields.some((f) => f.name === customField)) {
       addField(customField);
       setCustomField("");
     }
@@ -51,7 +52,12 @@ export default function CreateApi() {
       handleAddCustomField();
     }
   };
-
+  const generateApi=()=>{
+    const data = {
+      schemaName, fields
+    }
+    createApi(data);
+  }
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
@@ -142,13 +148,13 @@ export default function CreateApi() {
             <h3 className="text-lg font-semibold mb-3 text-indigo-400">
               Selected Fields
             </h3>
-            {selectedFields.length === 0 ? (
+            {fields.length === 0 ? (
               <div className="p-4 bg-gray-800 rounded-md text-gray-400 text-center border border-gray-700">
                 No fields selected. Add fields from the sidebar.
               </div>
             ) : (
               <ul className="space-y-2 bg-gray-800 p-4 rounded-md border border-gray-700">
-                {selectedFields.map((field) => (
+                {fields.map((field) => (
                   <li
                     key={field.name}
                     className="flex items-center justify-between p-2 bg-gray-700 rounded-md shadow-sm"
@@ -236,13 +242,13 @@ export default function CreateApi() {
             <pre className="bg-gray-700 p-3 rounded-md border border-gray-600 overflow-x-auto text-sm font-mono text-white">
               {`{
   "method": "${httpMethod}",
-  "fields": ${JSON.stringify(selectedFields, null, 2)}
+  "fields": ${JSON.stringify(fields, null, 2)}
 }`}
             </pre>
           </div>
 
           <div className="mt-6">
-            <button className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium">
+            <button className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium" onClick={generateApi}>
               Generate API
             </button>
           </div>

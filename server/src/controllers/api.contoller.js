@@ -71,3 +71,28 @@ export const createAPI = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+//Need to update it for updation of APIs
+export const updateApi = async(req, res)=>{
+    const {id} = req.params;
+    const { schemaName, schemaDescription, fields } = req.body;
+    try {
+        const updatedApi = await Api.findByIdAndUpdate(id, {schemaName, schemaDescription, fields});
+    } catch (error) {
+        console.error(`Server Error: ${error.message}`);
+        res.status(500).json({ message: "Internal Server Error" });
+
+    }
+}
+//...........................
+
+export const deleteApi = async(req, res)=>{
+    const {id} = req.params;
+    try{
+        const api = await Api.findByIdAndDelete(id);
+        res.status(200).json({message: "Deleted Successfully", api});
+    }
+    catch(error){
+        console.error(`Server Error: ${error.message}`);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
