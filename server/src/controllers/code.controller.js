@@ -114,3 +114,16 @@ export default router;
     `;
     return routes;
 };
+
+
+export const apiPathGenerator = (schemaName) => {
+    const basePath = `/${schemaName.toLowerCase()}`;
+
+    return {
+        create: basePath,
+        getAll: basePath,
+        getByID: `${basePath}/:id`, 
+        update: `${basePath}/:id`,
+        delete: `${basePath}/:id`
+    };
+};

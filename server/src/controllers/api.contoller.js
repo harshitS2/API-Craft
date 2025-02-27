@@ -1,5 +1,5 @@
-import Api from "../models/Api.model";
-import { generateSchemaCode } from "./code.controller.js";
+import Api from "../models/Api.model.js";
+import { apiPathGenerator, generateControllerCode, generateRoutesCode, generateSchemaCode } from "./code.controller.js";
 
 export const getAPIs = async (req, res) => {
     try {
@@ -8,32 +8,66 @@ export const getAPIs = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 export const getAPIBySchemaName = async (req, res) => {
     try {
         const { schemaName } = req.params;
         const api = await Api.findOne({ schemaName });
+        if (!api) {
+            return res.status(404).json({ message: "API not found" });
+        }
         res.status(200).json(api);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 export const getAPIById = async (req, res) => {
     try {
         const { id } = req.params;
         const api = await Api.findById(id);
+        if (!api) {
+            return res.status(404).json({ message: "API not found" });
+        }
         res.status(200).json(api);
-    }
-    catch (error) {
+    } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 export const createAPI = async (req, res) => {
-    const {schemaName, schemaDescription, feilds } = req.body;
-    schemaCode = generateSchemaCode(schemaName, feilds);
-    
-    
-}
+    const { schemaName, schemaDescription, fields } = req.body;
+
+    if (!schemaName || !fields || !Array.isArray(fields) || fields.length === 0) {
+        return res.status(400).json({ message: "Schema name and fields are required." });
+    }
+
+    const schemaCode = await generateSchemaCode(schemaName, fields);
+    const controllerCode = generateControllerCode(schemaName, fields);
+    const routesCode = generateRoutesCode(schemaName);
+    const apiPaths = apiPathGenerator(schemaName);
+
+    try {
+        const isAvailable = await Api.findOne({ schemaName });
+        if (isAvailable) {
+            return res.status(400).json({ message: "Schema Name already exists, please search and proceed." });
+        }
+
+        const newSchema = new Api({
+            schemaName,
+            schemaDescription,
+            schemaCode,
+            controllerCode,
+            routesCode,
+            apiPaths
+        });
+
+        await newSchema.save();
+        
+        res.status(201).json(newSchema);
+    } catch (error) {
+        console.error(`Server Error: ${error.message}`);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
