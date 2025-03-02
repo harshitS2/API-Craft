@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { useParams } from 'react-router-dom';
+import { useApiStore } from '../store/useApiStore';
 
 
-const Dashboard = () => {
+
+const ApiDisplay = () => {
   const [activeTab, setActiveTab] = useState('schema');
   const [expandedMethod, setExpandedMethod] = useState();
-  const location = useLocation();
-  const { generatedApi } = location.state || {};
-  console.log(generatedApi);
-
+    const {id} = useParams();
+    const {getAPIById} = useApiStore();
+  const [api, setApi] = useState();
+    useEffect(()=>{
+        const fetchApi = async()=>{
+            const api = await getAPIById(id);
+            setApi(api);
+        };
+        fetchApi();
+    }, [id]);
   const toggleMethod = (methodName) => {
     if (expandedMethod === methodName) {
       setExpandedMethod(null);
@@ -18,17 +26,12 @@ const Dashboard = () => {
       setExpandedMethod(methodName);
     }
   };
+  if (!api) return <p>Loading API details...</p>;
 
   return (
     <div className="min-h-screen bg-base-200 p-8">
       <div className="max-w-7xl mx-auto">
-        <div className='flex justify-between items-center w-full'>
-          
-        <h1 className="text-3xl font-bold  mb-8">API Documentation: {generatedApi.schemaName}</h1>
-        {generatedApi.message ? <h1 className="text-xl font-bold  mb-8">{generatedApi.message}</h1>: ""}
-        
-
-        </div>
+        <h1 className="text-3xl font-bold  mb-8">API Documentation: {api.schemaName}</h1>
 
         {/* Navigation Tabs */}
         <div className="flex space-x-4 mb-6">
@@ -65,7 +68,7 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Schema Definition</h2>
               <div className="rounded-lg overflow-hidden">
                 <SyntaxHighlighter language="javascript" style={tomorrow}>
-                  {generatedApi.schemaCode}
+                  {api.schemaCode}
                 </SyntaxHighlighter>
               </div>
             </div>
@@ -75,8 +78,8 @@ const Dashboard = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4">Controller Methods</h2>
               <div className="space-y-4">
-                {generatedApi.controllerCode.map((method) => (
-                  <div key={method.name} className="border rounded-2xl">
+                {api.controllerCode.map((method) => (
+                  <div key={method._id.$oid} className="border rounded-2xl">
                     <button
                       className="w-full px-4 py-2 text-left font-medium bg-base-400 hover:bg-base-100 border rounded-2xl flex justify-between items-center"
                       onClick={() => toggleMethod(method.name)}
@@ -102,7 +105,7 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Routes Configuration</h2>
               <div className="rounded-lg overflow-hidden">
                 <SyntaxHighlighter language="javascript" style={tomorrow}>
-                  {generatedApi.routesCode}
+                  {api.routesCode}
                 </SyntaxHighlighter>
               </div>
             </div>
@@ -112,7 +115,7 @@ const Dashboard = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4">API Endpoints</h2>
               <div className="grid grid-cols-1 gap-4">
-                {Object.entries(generatedApi.apiPaths).map(([operation, path]) => (
+                {Object.entries(api.apiPaths).map(([operation, path]) => (
                   <div key={operation} className="bg-base-300 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="font-medium capitalize">{operation}:</span>
@@ -129,4 +132,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ApiDisplay;

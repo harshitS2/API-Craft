@@ -3,9 +3,9 @@ import { createAPI, deleteApi, getAPIById, getAPIBySchemaName, getAPIs } from '.
 
 const route = express.Router();
 
-route.get('/', getAPIs);
-route.get('/:schemaName', getAPIBySchemaName);
-route.get('/:id', getAPIById);
+route.get('/apis', getAPIs);
+route.get('/apis/schema/:schemaName', getAPIBySchemaName);
+route.get('/apis/:id', getAPIById);
 route.post('/', createAPI);
 route.delete('/:id', deleteApi);
 

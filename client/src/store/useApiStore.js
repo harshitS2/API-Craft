@@ -7,7 +7,7 @@ export const useApiStore = create((set, get) => ({
 
     getApis: async () => {
         try {
-            const res = await axiosInstance.get("/");
+            const res = await axiosInstance.get("/apis");
             set({ apis: res.data });
         } catch (error) {
             console.error("Error fetching APIs:", error);
@@ -18,7 +18,7 @@ export const useApiStore = create((set, get) => ({
 
     getAPIById: async (id) => {
         try {
-            const res = await axiosInstance.get(`/${id}`);
+            const res = await axiosInstance.get(`/apis/${id}`);
             return res.data;
         } catch (error) {
             console.error(`Error fetching API with ID ${id}:`, error);
@@ -28,7 +28,7 @@ export const useApiStore = create((set, get) => ({
     },
     getApiBySchemaName: async(schemaName)=>{
         try {
-            const res = await axiosInstance.get(`/${schemaName}`);
+            const res = await axiosInstance.get(`/apis/schema/${schemaName}`);
             return res.data;
         } catch (error) {
             console.error(`Error fetching API with Schema Name ${schemaName}:`, error);
@@ -41,6 +41,7 @@ export const useApiStore = create((set, get) => ({
             const res = await axiosInstance.post("/", apiData);
             set((state) => ({ apis: [...state.apis, res.data] }));
             toast.success("API created successfully");
+            return res.data;
         } catch (error) {
             console.error("Error creating API:", error);
             toast.error("Failed to create API");

@@ -15,6 +15,8 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import { Toaster } from "react-hot-toast";
 import CreateApi from "./pages/CreateApi";
+import Apis from "./pages/Apis";
+import ApiDisplay from "./pages/ApiDisplay";
 
 function App() {
   const { checkAuth, authUser } = useAuthStore();
@@ -30,15 +32,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/dashboard"
-          element={authUser ? <Dashboard /> : <Navigate to="/login" />}
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create-api" element={<CreateApi />} />
+        <Route path="/apis" element={<Apis />} />
+        <Route path="/api/:id" element={<ApiDisplay />}/>
       </Routes>
       <Toaster />
     </BrowserRouter>
-
   );
 }
 export default App;

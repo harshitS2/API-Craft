@@ -48,29 +48,44 @@ export const createAPI = async (req, res) => {
     const routesCode = generateRoutesCode(schemaName);
     const apiPaths = apiPathGenerator(schemaName);
 
-    try {
-        const isAvailable = await Api.findOne({ schemaName });
-        if (isAvailable) {
-            return res.status(400).json({ message: "Schema Name already exists, please search and proceed." });
+    // If user is logged in, save to DB
+    if (req.user) {
+        try {
+            const isAvailable = await Api.findOne({ schemaName });
+            if (isAvailable) {
+                return res.status(400).json({ message: "Schema Name already exists, please search and proceed." });
+            }
+
+            const newSchema = new Api({
+                schemaName,
+                schemaDescription,
+                schemaCode,
+                controllerCode,
+                routesCode,
+                apiPaths
+            });
+
+            await newSchema.save();
+
+            return res.status(201).json(newSchema);
+        } catch (error) {
+            console.error(`Server Error: ${error.message}`);
+            return res.status(500).json({ message: "Internal Server Error" });
         }
-
-        const newSchema = new Api({
-            schemaName,
-            schemaDescription,
-            schemaCode,
-            controllerCode,
-            routesCode,
-            apiPaths
-        });
-
-        await newSchema.save();
-        
-        res.status(201).json(newSchema);
-    } catch (error) {
-        console.error(`Server Error: ${error.message}`);
-        res.status(500).json({ message: "Internal Server Error" });
     }
+
+    // If user is NOT logged in, return API details but do NOT save
+    return res.status(200).json({
+        schemaName,
+        schemaDescription,
+        schemaCode,
+        controllerCode,
+        routesCode,
+        apiPaths,
+        message: "This API was not saved. Log in to save it."
+    });
 };
+
 //Need to update it for updation of APIs
 export const updateApi = async(req, res)=>{
     const {id} = req.params;

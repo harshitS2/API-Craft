@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { PlusCircle, Trash2, Plus } from "lucide-react";
 import { useApiStore } from "../store/useApiStore";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function CreateApi() {
   const [fields, setfields] = useState([]);
@@ -8,7 +10,7 @@ export default function CreateApi() {
   const [schemaName, setSchemaName] = useState("Resource");
   const [customField, setCustomField] = useState("");
   const {createApi} = useApiStore();
-  const navigate = navigator;
+  const navigate = useNavigate();
   const preWrittenFields = [
     "name",
     "email",
@@ -53,13 +55,19 @@ export default function CreateApi() {
       handleAddCustomField();
     }
   };
-  const generateApi=()=>{
+  const generateApi = async () => {
     const data = {
-      schemaName, fields
+      schemaName,
+      fields,
+    };
+    try {
+      const generatedApi = await createApi(data); // Await the Promise
+      navigate("/dashboard", { state: { generatedApi } }); // Pass resolved data
+    } catch (error) {
+      console.error("Failed to generate API:", error);
+      toast.error("Failed to generate API")
     }
-    createApi(data);
-    navigate('/dashboard')
-  }
+  };
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
