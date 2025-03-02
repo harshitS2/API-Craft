@@ -8,6 +8,7 @@ export default function CreateApi() {
   const [schemaName, setSchemaName] = useState("Resource");
   const [customField, setCustomField] = useState("");
   const {createApi} = useApiStore();
+  const navigate = navigator;
   const preWrittenFields = [
     "name",
     "email",
@@ -57,6 +58,7 @@ export default function CreateApi() {
       schemaName, fields
     }
     createApi(data);
+    navigate('/dashboard')
   }
   return (
     <div className="min-h-screen bg-gray-900 text-white">
