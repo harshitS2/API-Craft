@@ -9,7 +9,7 @@ export default function CreateApi() {
   const [httpMethod, setHttpMethod] = useState("GET");
   const [schemaName, setSchemaName] = useState("Resource");
   const [customField, setCustomField] = useState("");
-  const {createApi} = useApiStore();
+  const { createApi } = useApiStore();
   const navigate = useNavigate();
   const preWrittenFields = [
     "name",
@@ -65,7 +65,7 @@ export default function CreateApi() {
       navigate("/dashboard", { state: { generatedApi } }); // Pass resolved data
     } catch (error) {
       console.error("Failed to generate API:", error);
-      toast.error("Failed to generate API")
+      toast.error("Failed to generate API");
     }
   };
   return (
@@ -258,7 +258,15 @@ export default function CreateApi() {
           </div>
 
           <div className="mt-6">
-            <button className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium" onClick={generateApi}>
+            <button
+              className={`w-full py-2 px-4 bg-indigo-600 text-white rounded-md transition-colors font-medium ${
+                fields.length === 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-indigo-700"
+              }`}
+              onClick={generateApi}
+              disabled={fields.length === 0}
+            >
               Generate Code
             </button>
           </div>
