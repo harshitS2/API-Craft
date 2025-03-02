@@ -259,7 +259,7 @@ export default function CreateApi() {
 
           <div className="mt-6">
             <button className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium" onClick={generateApi}>
-              Generate API
+              Generate Code
             </button>
           </div>
         </div>
