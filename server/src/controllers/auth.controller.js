@@ -64,5 +64,6 @@ export const updateProfile = async (req, res) => {
 }
 
 export const checkAuth = async (req, res) => {
+    console.log('User in checkAuth:', req.user); // Log the user
     res.status(200).json({ message: "Authenticated", user: req.user });
 };

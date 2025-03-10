@@ -60,14 +60,19 @@ export default function CreateApi() {
       schemaName,
       fields,
     };
+    
     try {
-      const generatedApi = await createApi(data); // Await the Promise
-      navigate("/dashboard", { state: { generatedApi } }); // Pass resolved data
+        const generatedApi = await createApi(data);
+        if (!generatedApi) {
+            throw new Error("API generation failed");
+        }
+        navigate("/dashboard", { state: { generatedApi } });
     } catch (error) {
-      console.error("Failed to generate API:", error);
-      toast.error("Failed to generate API");
+        console.error("Failed to generate API:", error);
+        toast.error(error.message || "Failed to generate API");
     }
-  };
+};
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">

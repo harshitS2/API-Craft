@@ -41,7 +41,7 @@ const Login = () => {
         setEmailError(false);
         setPasswordError(false);
         setServerError("");
-        navigate("/dashboard");
+        navigate("/");
       } else {
         throw new Error("Unexpected login response");
       }

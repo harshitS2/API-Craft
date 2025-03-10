@@ -38,7 +38,7 @@ export const useApiStore = create((set, get) => ({
     },
     createApi: async (apiData) => {
         try {
-            const res = await axiosInstance.post("/", apiData);
+            const res = await axiosInstance.post("/api", apiData);
             set((state) => ({ apis: [...state.apis, res.data] }));
             toast.success("API created successfully");
             return res.data;

@@ -47,8 +47,6 @@ export const createAPI = async (req, res) => {
     const controllerCode = generateControllerCode(schemaName, fields);
     const routesCode = generateRoutesCode(schemaName);
     const apiPaths = apiPathGenerator(schemaName);
-
-    // If user is logged in, save to DB
     if (req.user) {
         try {
             const isAvailable = await Api.findOne({ schemaName });
@@ -64,7 +62,6 @@ export const createAPI = async (req, res) => {
                 routesCode,
                 apiPaths
             });
-
             await newSchema.save();
 
             return res.status(201).json(newSchema);
@@ -73,8 +70,6 @@ export const createAPI = async (req, res) => {
             return res.status(500).json({ message: "Internal Server Error" });
         }
     }
-
-    // If user is NOT logged in, return API details but do NOT save
     return res.status(200).json({
         schemaName,
         schemaDescription,
